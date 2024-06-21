@@ -12,7 +12,7 @@ require("dotenv").config();
 
 import logger from "./logger";
 
-import { evalJobCreator, evalJobExecutor } from "./redis/consumer";
+// import { evalJobCreator, evalJobExecutor } from "./redis/consumer";
 import helmet from "helmet";
 
 const app = express();
@@ -23,17 +23,16 @@ if (isSentryEnabled) {
   Sentry.init({
     dsn: String(env.SENTRY_DSN),
     integrations: [
-      // enable HTTP calls tracing
       new Sentry.Integrations.Http({ tracing: true }),
-      // enable Express.js middleware tracing
+
       new Sentry.Integrations.Express({ app }),
       nodeProfilingIntegration(),
       Sentry.metrics.metricsAggregatorIntegration(),
     ],
-    // Performance Monitoring
-    tracesSampleRate: 0.1, //  Capture 100% of the transactions
-    // Set sampling rate for profiling - this is relative to tracesSampleRate
-    profilesSampleRate: 0.1,
+
+    tracesSampleRate: 0.01, //  Capture 100% of the transactions
+
+    profilesSampleRate: 0.01,
     sampleRate: 0.1,
   });
 
@@ -63,19 +62,19 @@ if (isSentryEnabled) {
 app.use(middlewares.notFound);
 app.use(middlewares.errorHandler);
 
-logger.info("Eval Job Creator started", evalJobCreator?.isRunning());
+// logger.info("Eval Job Creator started", evalJobCreator?.isRunning());
 
-logger.info("Eval Job Executor started", evalJobExecutor?.isRunning());
+// logger.info("Eval Job Executor started", evalJobExecutor?.isRunning());
 
-evalJobCreator?.on("failed", (job, err) => {
-  logger.error(err, `Eval Job with id ${job?.id} failed with error ${err}`);
-});
+// evalJobCreator?.on("failed", (job, err) => {
+//   logger.error(err, `Eval Job with id ${job?.id} failed with error ${err}`);
+// });
 
-evalJobCreator?.on("failed", (job, err) => {
-  logger.error(
-    err,
-    `Eval execution Job with id ${job?.id} failed with error ${err}`
-  );
-});
+// evalJobCreator?.on("failed", (job, err) => {
+//   logger.error(
+//     err,
+//     `Eval execution Job with id ${job?.id} failed with error ${err}`
+//   );
+// });
 
 export default app;

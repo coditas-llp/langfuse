@@ -71,7 +71,8 @@
     }
   },
   "dependencies": {
-    "@types/pg": "^8.11.5",
+    "@langfuse/shared": "workspace:^",
+    "@types/pg": "^8.11.6",
     "pg": "^8.11.5"
   }
 }

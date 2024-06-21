@@ -3,7 +3,7 @@ import emojis from "./emojis";
 import { z } from "zod";
 import logger from "../logger";
 import { Queue } from "bullmq";
-import { redis } from "../redis/redis";
+// import { redis } from "../redis/redis";
 import { randomUUID } from "crypto";
 import basicAuth from "express-basic-auth";
 import { env } from "../env";
@@ -12,11 +12,11 @@ import { prisma } from "@langfuse/shared/src/db";
 
 const router = express.Router();
 
-export const evalQueue = redis
-  ? new Queue<TQueueJobTypes[QueueName.TraceUpsert]>(QueueName.TraceUpsert, {
-      connection: redis,
-    })
-  : null;
+// export const evalQueue = redis
+//   ? new Queue<TQueueJobTypes[QueueName.TraceUpsert]>(QueueName.TraceUpsert, {
+//       connection: redis,
+//     })
+//   : null;
 
 const eventBody = z.array(
   z.object({
@@ -34,19 +34,19 @@ router.get<{}, { status: string }>("/health", async (_req, res) => {
     //check database health
     await prisma.$queryRaw`SELECT 1;`;
 
-    if (!redis) {
-      throw new Error("Redis connection not available");
-    }
+    // if (!redis) {
+    //   throw new Error("Redis connection not available");
+    // }
 
-    await Promise.race([
-      redis?.ping(),
-      new Promise((_, reject) =>
-        setTimeout(
-          () => reject(new Error("Redis ping timeout after 2 seconds")),
-          2000
-        )
-      ),
-    ]);
+    // await Promise.race([
+    //   redis?.ping(),
+    //   new Promise((_, reject) =>
+    //     setTimeout(
+    //       () => reject(new Error("Redis ping timeout after 2 seconds")),
+    //       2000
+    //     )
+    //   ),
+    // ]);
 
     res.json({
       status: "ok",
@@ -67,7 +67,7 @@ router
   )
   .post<{}, EventsResponse>("/events", async (req, res) => {
     const { body } = req;
-    logger.debug(`Received events, ${JSON.stringify(body)}`);
+    logger.info(`Received events, ${JSON.stringify(body)}`);
 
     const events = eventBody.parse(body);
 
@@ -75,7 +75,7 @@ router
     // If we don't deduplicate, we will end up processing the same trace twice on two different workers in parallel.
     const jobs = createRedisEvents(events);
 
-    await evalQueue?.addBulk(jobs); // add all jobs as bulk
+    // await evalQueue?.addBulk(jobs); // add all jobs as bulk
 
     res.json({
       status: "success",

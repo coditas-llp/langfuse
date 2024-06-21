@@ -29,7 +29,7 @@ import { decrypt } from "@langfuse/shared/encryption";
 import { kyselyPrisma, prisma } from "@langfuse/shared/src/db";
 
 import logger from "./logger";
-import { evalQueue } from "./redis/consumer";
+// import { evalQueue } from "./redis/consumer";
 
 // this function is used to determine which eval jobs to create for a given trace
 // there might be multiple eval jobs to create for a single trace
@@ -117,28 +117,28 @@ export const createEvalJobs = async ({
         .execute();
 
       // add the job to the next queue so that eval can be executed
-      evalQueue?.add(
-        QueueName.EvaluationExecution,
-        {
-          name: QueueJobs.EvaluationExecution,
-          id: randomUUID(),
-          timestamp: new Date(),
-          payload: {
-            projectId: event.projectId,
-            jobExecutionId: jobExecutionId,
-          },
-        },
-        {
-          attempts: 10,
-          backoff: {
-            type: "exponential",
-            delay: 1000,
-          },
-          delay: config.delay, // milliseconds
-          removeOnComplete: true,
-          removeOnFail: 10_000,
-        }
-      );
+      // evalQueue?.add(
+      //   QueueName.EvaluationExecution,
+      //   {
+      //     name: QueueJobs.EvaluationExecution,
+      //     id: randomUUID(),
+      //     timestamp: new Date(),
+      //     payload: {
+      //       projectId: event.projectId,
+      //       jobExecutionId: jobExecutionId,
+      //     },
+      //   },
+      //   {
+      //     attempts: 10,
+      //     backoff: {
+      //       type: "exponential",
+      //       delay: 1000,
+      //     },
+      //     delay: config.delay, // milliseconds
+      //     removeOnComplete: true,
+      //     removeOnFail: 10_000,
+      //   }
+      // );
     } else {
       // if we do not have a match, and execution exists, we mark the job as cancelled
       // we do this, because a second trace event might 'deselect' a trace
