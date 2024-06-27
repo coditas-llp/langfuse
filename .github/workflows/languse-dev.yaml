@@ -38,6 +38,7 @@ jobs:
           ECR_REPOSITORY: therix-dev-langfuse
         run: |
           echo $ECR_REGISTRY
+          aws s3 cp s3://therix-infra-state-files/therix-langfuse/dev/.env .
           docker build -t $ECR_REPOSITORY:latest .
           docker tag $ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
