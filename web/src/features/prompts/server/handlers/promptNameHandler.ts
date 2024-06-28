@@ -1,5 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getPrompts } from "@/src/features/prompts/server/actions/getPromptByName";
+import {
+  getPrompts,
+  activatePrompt,
+} from "@/src/features/prompts/server/actions/getPromptByName";
 import { withMiddlewares } from "@/src/server/utils/withMiddlewares";
 import { authorizePromptRequestOrThrow } from "../utils/authorizePromptRequest";
 
@@ -16,4 +19,20 @@ const getPromptNameHandler = async (
   return res.status(200).json(prompt);
 };
 
-export const promptNameHandler = withMiddlewares({ GET: getPromptNameHandler });
+const putPromptNameHandler = async (
+  req: NextApiRequest,
+  res: NextApiResponse,
+) => {
+  const authCheck = await authorizePromptRequestOrThrow(req);
+
+  const { promptName: id } = req.query; // using id in place of promptName
+
+  const prompt = await activatePrompt(id as string);
+
+  return res.status(200).json(prompt);
+};
+
+export const promptNameHandler = withMiddlewares({
+  GET: getPromptNameHandler,
+  PUT: putPromptNameHandler,
+});
