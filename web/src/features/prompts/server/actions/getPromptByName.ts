@@ -121,13 +121,13 @@ const getPromptByLabel = async ({
 export const activatePrompt = async (id: string): Promise<Prompt> => {
   const prompt = await prisma.prompt.findUnique({
     where: { id },
-    select: { name: true },
+    select: { name: true, projectId: true },
   });
 
   if (!prompt) throw new LangfuseNotFoundError(`No prompt found with id ${id}`);
 
   await prisma.prompt.updateMany({
-    where: { name: prompt.name },
+    where: { name: prompt.name, projectId: prompt.projectId },
     data: { isActive: false },
   });
 
