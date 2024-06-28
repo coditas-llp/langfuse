@@ -27,7 +27,7 @@ const postPromptsHandler = async (
   res: NextApiResponse,
 ) => {
   const authCheck = await authorizePromptRequestOrThrow(req);
-  const { projectId, ...payload } = req.body;
+  const { projectId, isActive, ...payload } = req.body;
   const input = CreatePromptSchema.parse(payload);
   const createdPrompt = await createPrompt({
     ...input,
@@ -35,6 +35,7 @@ const postPromptsHandler = async (
     projectId: projectId,
     createdBy: "API",
     prisma: prisma,
+    isActive
   });
 
   return res.status(201).json(createdPrompt);
