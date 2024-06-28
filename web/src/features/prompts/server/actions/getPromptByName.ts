@@ -37,6 +37,7 @@ export const getPrompts = async (
       projectId: project_id,
       name,
     },
+    orderBy: [{ createdAt: "desc" }],
   })) as any;
 };
 
