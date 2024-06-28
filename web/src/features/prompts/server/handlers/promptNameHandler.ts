@@ -25,7 +25,7 @@ const putPromptNameHandler = async (
 ) => {
   const authCheck = await authorizePromptRequestOrThrow(req);
 
-  const { promptName: id } = req.query; // using id in place of promptName
+  const { id } = req.body;
 
   const prompt = await activatePrompt(id as string);
 
