@@ -1,10 +1,10 @@
 import { verifyAuthHeaderAndReturnScope } from "@/src/features/public-api/server/apiAuth";
 import { cors, runMiddleware } from "@/src/features/public-api/server/cors";
-import { mapUsageOutput } from "@/src/features/public-api/server/outputSchemaConversion";
 import { prisma } from "@langfuse/shared/src/db";
 import { isPrismaException } from "@/src/utils/exceptions";
 import { type NextApiRequest, type NextApiResponse } from "next";
 import { z } from "zod";
+import { ObservationReturnType } from "@/src/server/api/routers/traces";
 
 const GetTraceSchema = z.object({
   traceId: z.string(),
@@ -42,44 +42,84 @@ export default async function handler(
       });
     }
     // END CHECK ACCESS SCOPE
-
-    const trace = await prisma.trace.findFirst({
+    const trace = await prisma.trace.findFirstOrThrow({
       where: {
         id: traceId,
       },
     });
-
     if (!trace) {
       return res.status(404).json({
         message: "Trace not found within authorized project",
       });
     }
-
+    const observations = await prisma.observationView.findMany({
+      select: {
+        id: true,
+        traceId: true,
+        projectId: true,
+        type: true,
+        startTime: true,
+        endTime: true,
+        name: true,
+        parentObservationId: true,
+        level: true,
+        statusMessage: true,
+        version: true,
+        createdAt: true,
+        model: true,
+        modelParameters: true,
+        promptTokens: true,
+        completionTokens: true,
+        totalTokens: true,
+        unit: true,
+        completionStartTime: true,
+        timeToFirstToken: true,
+        promptId: true,
+        modelId: true,
+        inputPrice: true,
+        outputPrice: true,
+        totalPrice: true,
+        calculatedInputCost: true,
+        calculatedOutputCost: true,
+        calculatedTotalCost: true,
+      },
+      where: {
+        traceId: {
+          equals: traceId,
+          not: null,
+        },
+        projectId: trace.projectId,
+      },
+    });
     const scores = await prisma.score.findMany({
       where: {
         traceId: traceId,
-        projectId: authCheck.scope.projectId,
+        projectId: trace.projectId,
       },
     });
-
-    const observations = await prisma.observationView.findMany({
-      where: {
-        traceId: traceId,
-        projectId: authCheck.scope.projectId,
-      },
-    });
-
-    const outObservations = observations.map(mapUsageOutput);
+    const obsStartTimes = observations
+      .map((o) => o.startTime)
+      .sort((a, b) => a.getTime() - b.getTime());
+    const obsEndTimes = observations
+      .map((o) => o.endTime)
+      .filter((t) => t)
+      .sort((a, b) => (a as Date).getTime() - (b as Date).getTime());
+    const latencyMs =
+      obsStartTimes.length > 0
+        ? obsEndTimes.length > 0
+          ? (obsEndTimes[obsEndTimes.length - 1] as Date).getTime() -
+            obsStartTimes[0]!.getTime()
+          : obsStartTimes.length > 1
+            ? obsStartTimes[obsStartTimes.length - 1]!.getTime() -
+              obsStartTimes[0]!.getTime()
+            : undefined
+        : undefined;
 
     return res.status(200).json({
       ...trace,
       scores,
-      htmlPath: `/project/${authCheck.scope.projectId}/traces/${traceId}`,
-      totalCost: outObservations.reduce(
-        (acc, obs) => acc + (obs.calculatedTotalCost ?? 0),
-        0,
-      ),
-      observations: outObservations,
+      latency: latencyMs !== undefined ? latencyMs / 1000 : undefined,
+      observations: observations as ObservationReturnType[],
     });
   } catch (error: unknown) {
     console.error(error);
