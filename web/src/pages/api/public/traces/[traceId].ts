@@ -82,6 +82,9 @@ export default async function handler(
         calculatedInputCost: true,
         calculatedOutputCost: true,
         calculatedTotalCost: true,
+        input: true,
+        output: true,
+        metadata: true,
       },
       where: {
         traceId: {
@@ -91,13 +94,33 @@ export default async function handler(
         projectId: trace.projectId,
       },
     });
+    const usage = {
+      promptTokens: observations
+        .map((o) => o.promptTokens)
+        .reduce((a, b) => a + b, 0),
+      completionTokens: observations
+        .map((o) => o.completionTokens)
+        .reduce((a, b) => a + b, 0),
+      totalTokens: observations
+        .map((o) => o.totalTokens)
+        .reduce((a, b) => a + b, 0),
+    };
+    const manipulatedObservations = observations.map((o) => {
+      return {
+        ...o,
+        latency: (
+          ((o.endTime as Date).getTime() - (o.startTime as Date).getTime()) /
+          1000
+        ).toFixed(2),
+      };
+    });
     const scores = await prisma.score.findMany({
       where: {
         traceId: traceId,
         projectId: trace.projectId,
       },
     });
-    const obsStartTimes = observations
+    const obsStartTimes = manipulatedObservations
       .map((o) => o.startTime)
       .sort((a, b) => a.getTime() - b.getTime());
     const obsEndTimes = observations
@@ -117,9 +140,11 @@ export default async function handler(
 
     return res.status(200).json({
       ...trace,
+      usage,
       scores,
-      latency: latencyMs !== undefined ? latencyMs / 1000 : undefined,
-      observations: observations as ObservationReturnType[],
+      latency:
+        latencyMs !== undefined ? (latencyMs / 1000).toFixed(2) : undefined,
+      observations: manipulatedObservations as any as ObservationReturnType[],
     });
   } catch (error: unknown) {
     console.error(error);

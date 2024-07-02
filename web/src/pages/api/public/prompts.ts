@@ -69,7 +69,7 @@ export default async function handler(
           : input.labels, // If production label is already present, this will still promote the prompt
         config: input.config ?? {}, // Config can be null in which case zod default value is not used
         projectId: authCheck.scope.projectId,
-        createdBy: "API",
+        createdBy: input.createdBy || 'API',
         prisma: prisma,
       });
 
