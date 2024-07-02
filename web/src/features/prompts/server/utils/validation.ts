@@ -28,7 +28,6 @@ export const CreateTextPromptSchema = z.object({
   prompt: z.string(),
   config: jsonSchema.nullable().default({}),
   tags: z.array(z.string()).nullish(),
-  createdBy: z.string().optional(),
 });
 
 export const CreateChatPromptSchema = z.object({
@@ -38,7 +37,6 @@ export const CreateChatPromptSchema = z.object({
   prompt: z.array(ChatMessageSchema),
   config: jsonSchema.nullable().default({}),
   tags: z.array(z.string()).nullish(),
-  createdBy: z.string().optional(),
 });
 
 export const CreatePromptSchema = z.union([
