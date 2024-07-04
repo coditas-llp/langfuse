@@ -52,7 +52,7 @@ export default async function handler(
       return res.status(200).json({
         id: project.id,
         name: project.name,
-        primaryKey : pk,
+        publicKey : pk,
         secretKey : sk,
         displaySk
       });
