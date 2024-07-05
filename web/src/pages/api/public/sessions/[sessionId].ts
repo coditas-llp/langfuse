@@ -7,6 +7,7 @@ import { isPrismaException } from "@/src/utils/exceptions";
 
 const GetSessionSchema = z.object({
   sessionId: z.string(),
+  projectId: z.string(),
 });
 
 export default async function handler(
@@ -32,7 +33,7 @@ export default async function handler(
     // END CHECK AUTH
     console.log("Trying to get session:", req.body, req.query);
 
-    const { sessionId } = GetSessionSchema.parse(req.query);
+    const { sessionId, projectId } = GetSessionSchema.parse(req.query);
 
     // CHECK ACCESS SCOPE
     if (authCheck.scope.accessLevel !== "all") {
@@ -46,7 +47,7 @@ export default async function handler(
       where: {
         id_projectId: {
           id: sessionId,
-          projectId: authCheck.scope.projectId,
+          projectId,
         },
       },
       include: {
