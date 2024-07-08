@@ -108,10 +108,14 @@ export default async function handler(
     const manipulatedObservations = observations.map((o) => {
       return {
         ...o,
-        latency: (
-          ((o.endTime as Date).getTime() - (o.startTime as Date).getTime()) /
-          1000
-        ).toFixed(2),
+        latency:
+          o.startTime != null && o.endTime != null
+            ? (
+                ((o.endTime as Date).getTime() -
+                  (o.startTime as Date).getTime()) /
+                1000
+              ).toFixed(2)
+            : 0,
       };
     });
     const scores = await prisma.score.findMany({
