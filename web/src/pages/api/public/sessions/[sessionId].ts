@@ -51,7 +51,11 @@ export default async function handler(
         },
       },
       include: {
-        traces: true,
+        traces: {
+          orderBy: {
+            createdAt: "asc",
+          },
+        },
       },
     });
 
