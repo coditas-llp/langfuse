@@ -1,0 +1,50 @@
+name: Deploy to prod
+
+on:
+  workflow_dispatch:
+
+env:
+  ECS_CLUSTER: therix-prod-ecs-cluster
+  ECS_SERVICE_NAME: therix-prod-langfuse-service
+  ECS_TASK_DEFINITION: therix-prod-langfuse-service
+  IMAGE_TAG: ${{ github.run_number }}
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: 905418140364.dkr.ecr.us-east-1.amazonaws.com
+  ECR_REPOSITORY: therix-prod-langfuse
+
+jobs:
+  deploy:
+     permissions:
+       id-token: write
+       contents: read
+
+     runs-on: ubuntu-latest
+
+     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::905418140364:role/github-action-deployment-role
+          role-session-name: samplerolesession
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Image Push to ECR
+        run: |
+          aws s3 cp s3://therix-infra-state-files/therix-langfuse/prod/.env .
+          docker build -t $ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          
+      - name: Update ECS service
+        run: |
+          sed -i -e "s;%REPO_URL%;${ECR_REGISTRY}/${ECR_REPOSITORY}:$IMAGE_TAG;g" prod-task-def-langfuse.json
+          aws ecs register-task-definition --requires-compatibilities FARGATE --network-mode awsvpc --cpu 512 --memory 1024 --cli-input-json --region ${AWS_REGION} file://prod-task-def-langfuse.json
+          export TASK_REVISION=$(aws ecs describe-task-definition --task-definition ${ECS_TASK_DEFINITION} --region ${AWS_REGION} --query taskDefinition.revision)
+          aws ecs update-service --cluster ${ECS_CLUSTER} --service ${ECS_SERVICE_NAME} --region ${AWS_REGION} --task-definition ${ECS_TASK_DEFINITION}:$TASK_REVISION 

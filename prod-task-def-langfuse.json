@@ -1,0 +1,37 @@
+{
+    "containerDefinitions": [
+      {
+        "name": "langfuse-service",
+        "memory": 1024,
+        "cpu": 512,
+        "image": "%REPO_URL%",
+        "environmentFiles": [
+          {
+            "type": "s3",
+            "value": "arn:aws:s3:::therix-infra-state-files/therix-langfuse/prod/.env"
+          }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/prod/therix-langfuse",
+            "awslogs-region": "us-east-1",
+            "awslogs-create-group": "true",
+            "awslogs-stream-prefix": "ecs"
+          }
+        },
+        "essential": true,
+        "portMappings": [
+          {
+            "hostPort": 3000,
+            "protocol": "tcp",
+            "containerPort": 3000
+          }
+        ]
+      }
+    ],
+    "family": "therix-prod-langfuse-service",
+    "executionRoleArn": "arn:aws:iam::905418140364:role/therix-task-execution-role",
+    "taskRoleArn": "arn:aws:iam::905418140364:role/therix-task-execution-role"
+  }
+  
