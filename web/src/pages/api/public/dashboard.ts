@@ -23,7 +23,7 @@ export default async function handler(
   if (req.method === "POST") {
     try {
       const query  = req.body;
-      const client = new Client({connectionString : process.env.DATABASE_URL, ssl : true});
+      const client = new Client({connectionString : process.env.DATABASE_URL});
       await client.connect();
       const result = await client.query(query);
       await client.end();
