@@ -9,5 +9,5 @@ export default async function auth(req: NextApiRequest, res: NextApiResponse) {
   // for api routes, we need to call the headers in the api route itself
   // disable caching for anything auth related
   res.setHeader("Cache-Control", "no-store, max-age=0");
-  return await NextAuth(req, res, authOptions);
+  // return await NextAuth(req, res, authOptions);
 }
