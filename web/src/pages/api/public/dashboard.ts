@@ -2,7 +2,7 @@ import { verifyAuthHeaderAndReturnScope } from "@/src/features/public-api/server
 import { cors, runMiddleware } from "@/src/features/public-api/server/cors";
 import { isPrismaException } from "@/src/utils/exceptions";
 import { NextApiRequest, NextApiResponse } from "next";
-import { Client } from 'pg';
+import { Client } from "pg";
 
 export default async function handler(
   req: NextApiRequest,
@@ -22,8 +22,11 @@ export default async function handler(
 
   if (req.method === "POST") {
     try {
-      const query  = req.body;
-      const client = new Client({connectionString : process.env.DATABASE_URL});
+      const query = req.body;
+      const client = new Client({
+        connectionString: process.env.DATABASE_URL,
+        ssl: process.env.DATABASE_SSL === "true" ? true : false,
+      });
       await client.connect();
       const result = await client.query(query);
       await client.end();
